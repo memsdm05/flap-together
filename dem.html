@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="shortcut icon" href="">
+</head>
+
+<body>
+
+    <!-- Place your content here -->
+    <div class="container"
+        style="text-align: center; position:relative; width:480px; height:640px; padding:0; margin:0 auto;">
+        <canvas id="gamecvs" style="height:100%; width:100%; border: 1px solid black">
+        </canvas>
+        <div id="users"
+            style="position:absolute; height:50%; width:120px; left:-120px; top:0; background-color: black;">
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+
+    <script>
+        var cvs = document.getElementById('gamecvs');
+        //sets a variable which calls the game canvas/container
+        var ctx = cvs.getContext('2d');
+        //allows the 2d image variant to be drawn on the canvas
+
+        isPlaying = true;
+
+        const grav = 0.5;
+        const jump = 4.6;
+        const radius = 12;
+
+
+        var nPipe = { x: 10, y: 20, width: 20, height: 40 };
+        var sPipe = {}
+
+        cvs.addEventListener("click", function (evt) {
+            if (bird1.y - bird1.radius <= 0) { return; }
+            bird1.flap();
+        });
+
+
+        class bird {
+            constructor(y, width, height) {
+                this.x = 50
+                this.y = y
+                this.width = width
+                this.height = height
+                this.frame = 0
+                this.speed = 0
+                this.rotation = 0
+                this.animationArray = []
+            }
+
+
+            draw() {
+                ctx.fillStyle = animationArray[this.frame];
+                ctx.fillRect(this.x, this.y, this.width, this.height)
+            }
+            flap() {
+                this.speed = - this.jump; 
+            }
+            update() {
+                ctx.clearRect(this.x, this.y, this.width, this.height)
+                console.log("hello")
+                this.speed += grav;
+                this.y += this.speed;
+                this.frame++
+            }
+        }
+
+
+        var bird1 = new bird(10, 10, 15,)
+        {
+            animationArray = ['green', 'red', "blue", "red"]
+            
+        }
+        bird1.draw();
+        function loop()
+        {
+            interval = setInterval(function(){
+               console.log("hi")
+               bird1.update() 
+               bird1.draw()
+            },100)
+        }
+        
+        loop();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
