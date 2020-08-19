@@ -8,7 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <link rel="shortcut icon" href="">
 </head>
@@ -17,84 +18,198 @@
 
     <!-- Place your content here -->
     <div class="container"
-        style="text-align: center; position:relative; width:480px; height:640px; padding:0; margin:0 auto;">
-        <canvas id="gamecvs" style="height:100%; width:100%; border: 1px solid black">
+        style="text-align: center; position:relative; width:400px; height:720px; padding:0; margin:0 auto;">
+        <canvas id="gamecvs" style=" border: 1px solid black; image-rendering: -webkit-crisp-edges;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+        -ms-interpolation-mode: nearest-neighbor;" width="400px" height="720px">
         </canvas>
-        <div id="users"
-            style="position:absolute; height:50%; width:120px; left:-120px; top:0; background-color: black;">
-        </div>
+        <div id="overlay"
+            style="text-align: center; position:absolute; top:0; width:400px; height:720px; padding:0; margin:0 auto;">
+            <br /><br /><br /><br /><br /><br /> <button type="button" class="btn btn-primary"
+                onclick="start()">Play!</button>
+            </div>
+                <div id="users"style="position:absolute; height:50%; width:120px; left:-120px; top:0; background-color: black;">
+                    <ul>
+                        <li><button onclick="changeBG()">BG</button></li>
+                        <li><button onclick="showHB()">HB</button></li>
+                    </ul>
+            </div>
+
+
     </div>
 
     <!-- SCRIPTS -->
 
     <script>
+
+        //DEFINE CANVAS AND CONTEXT
+
         var cvs = document.getElementById('gamecvs');
         //sets a variable which calls the game canvas/container
         var ctx = cvs.getContext('2d');
         //allows the 2d image variant to be drawn on the canvas
 
-        isPlaying = true;
 
-        const grav = 0.5;
-        const jump = 4.6;
-        const radius = 12;
+        //DEFINE GLOBAL VARIABLES AND CONSTANTS
+        const grav = 0.25;      //sets gravitational acceleration
+        const jump = 7.5;       //sets instantaneous flap speed setting 
+        const radius = 40;      //sets hitbox radius
+        const DEGREE = Math.PI / 180;
+        let frames = 0;
+        let pace=1.5;
+        const backgrounds=['assets/background.png','assets/background2.png']
+        var bgno=0;
 
 
-        var nPipe = { x: 10, y: 20, width: 20, height: 40 };
+        //TEMP place for bg
+
+        let background = new Image();    //bkgrd temp init inside of class for easier reference. will eventually be its own class
+                background.src = backgrounds[bgno];   //""
+
+        const state = {
+            current: 0,
+            getReady: 0,
+            game: 1,
+            over: 2
+        }
+
+
+        var nPipe = { x: 10, y: 20, width: 40, height: 40 };
         var sPipe = {}
 
-        cvs.addEventListener("click", function (evt) {
+        $("#overlay").on("click", function (evt) {
             if (bird1.y - bird1.radius <= 0) { return; }
             bird1.flap();
         });
 
+        function changeBG(){
+                bgno++;
+                bgno=bgno%2;
+                background.src = backgrounds[bgno];
+            }
 
+        //DEFINE CLASS OF BIRD
         class bird {
-            constructor(y, width, height) {
-                this.x = 50
-                this.y = y
+            constructor(y, width, height) {     //CONSTRUCTOR defines (and initializes some) properties which every new bird must contain
+                this.x = 150                     //Birds' x position should always be fixed until death.
+                this.y = y                      //parameters
                 this.width = width
                 this.height = height
-                this.frame = 0
-                this.speed = 0
-                this.rotation = 0
-                this.animationArray = []
+                this.frame = 0                  //flapping animation frame init at 0
+                this.speed = 0                  //velocity which combined with gravity can be used to obtain new y positions
+                this.rotation = 0               //starts rotation off at 0 (These will be measured in ^^DEGREES)
+                this.animationArray = []        //initializes array to hold frames(will be different for each bird so it's empty)
+                this.sprite = new Image();        //initializes the sprite as a new image so it can be draw and its src reset
             }
 
 
             draw() {
-                ctx.fillStyle = animationArray[this.frame];
-                ctx.fillRect(this.x, this.y, this.width, this.height)
+                ctx.clearRect(0, 0, cvs.width, cvs.height);        //clears the entire canvas
+                ctx.drawImage(background, 0, 0, cvs.width, cvs.height) //draws background (MOVE THIS INTO BG VARIABLE LATER)
+                ctx.save(); //saves position of all elments
+                ctx.translate(this.x, this.y);  //translates all elements
+                ctx.rotate(this.rotation);  //rotates to the updated rotation angle
+                ctx.drawImage(this.sprite, -this.width / 2, -this.height / 2, this.width, this.height);
+                //redraws the bird sprite while the canvas is at this angle
+                ctx.restore(); //restores all element from b4 save to original values but keeps the skewed bird :)
+
             }
             flap() {
-                this.speed = - this.jump; 
+                this.speed = -jump; //speed is completely reset into jump (negative because the origin is at the top), 
+            }//so the current downward speed won't affect the height of the jump.
+            update() {  //all properties are appropriately updated based on their conditions before redrawing can occur    
+                this.frame += frames%5 == 0 ? 1 : 0;
+                 this.frame = this.frame%animationArray.length;
+                if (this.y + this.height >= cvs.height - fg.height) {
+                    if (this.speed >= 0) { this.speed = 0 }
+                      this.rotation=0;
+                        this.frame=2;  
+                      this.y += this.speed;
+                }
+                else {
+                    this.speed += grav; //velocity incremented by acceleration pixels/interval^2
+                    this.sprite.src = animationArray[this.frame]  //finds the current frame to hold
+                
+
+                this.y += this.speed;   //pos is changed by the speed b/c speed holds pos y change per interval
+
+                if (this.speed >= jump) {
+                    this.rotation = 90 * DEGREE;    //has fully finished its flap arc and is now in a nosedive
+                    this.frame = 1;
+                    if(this.speed<=jump+0.75)
+                    {this.rotation=0}
+                }
+               
+
+                else {
+                    this.rotation = -25 * DEGREE;       //is currently mid flapping arc and is thus tilted upward.
+                    //IF TIME ALLOWS, WE CAN ADD A MORE EASED TRANSITION JUST BY CREATING A ROTATION ARRAY RATHER THAN A SINGLE VARIABLE
+                    //AND ADDING ANOTHER FRAMES COUNTER
+                    
+                }
             }
-            update() {
-                ctx.clearRect(this.x, this.y, this.width, this.height)
-                console.log("hello")
-                this.speed += grav;
-                this.y += this.speed;
-                this.frame++
             }
+        }  
+
+
+        var bird1 = new bird(300, 80, 50)
+        {
+            animationArray = ['assets/up.svg', 'assets/mid.svg', 'assets/down.svg', 'assets/mid.svg']
         }
 
 
-        var bird1 = new bird(10, 10, 15,)
-        {
-            animationArray = ['green', 'red', "blue", "red"]
+
+
+        var fg = {
+            img: new Image(),
             
+            height: 130,
+            x: 0,
+            y: 570,
+            width: cvs.width*2,
+            draw: function () {
+                this.img.src='assets/front.png',
+                // this.img.src = 'fg.png'     
+                // ctx.rect(this.x, this.y, this.width, this.height)
+                // let ptn = ctx.createPattern(fg.img, 'repeat-x');
+                // ctx.fillStyle = ptn;
+                // ctx.fill();
+               ctx.drawImage(this.img,this.x,this.y,this.width,this.height)
+
+            },
+            update: function () 
+            {
+            this.x===-105 ? this.x=0:this.x-=pace
+            }
         }
-        bird1.draw();
-        function loop()
-        {
-            interval = setInterval(function(){
-               console.log("hi")
-               bird1.update() 
-               bird1.draw()
-            },100)
+
+        function drawAll() {
+            bird1.draw()
+            fg.draw()
         }
-        
-        loop();
+        function loop() {
+            bird1.update()
+            fg.update()
+            drawAll()
+
+            requestAnimationFrame(loop);
+            frames++;
+        }
+        function start() {
+            document.getElementById("overlay").innerHTML = ""
+            loop();
+        }
+
+           // var loops;
+        // startgamestate = setInterval(function(){
+        //     loops++
+        //     if(loops=5){clearInterval(startgamestate)}
+    // },1000)
+
+
+
 
 
 
