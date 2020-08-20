@@ -8,20 +8,20 @@ var ctx = cvs.getContext('2d');
 
 
 //DEFINE GLOBAL VARIABLES AND CONSTANTS
-const grav = 0.25;      //sets gravitational acceleration
-const jump = 7.5;       //sets instantaneous flap speed setting 
-const radius = 40;      //sets hitbox radius
+const grav = 0.5;      //sets gravitational acceleration
+const jump = 9 ;       //sets instantaneous flap speed setting 
 const DEGREE = Math.PI / 180;
 let frames = 0;
-let pace=1.5;
-const backgrounds=['assets/background.png','assets/background2.png']
-var bgno=0;
+let pace = 2;
+const backgrounds = ['assets/back1.png', 'assets/back2.png']
+let position = []
+let hb=false;
 
 
 //TEMP place for bg
 
-let background = new Image();    //bkgrd temp init inside of class for easier reference. will eventually be its own class
-        background.src = backgrounds[bgno];   //""
+
+
 
 const state = {
     current: 0,
@@ -31,31 +31,49 @@ const state = {
 }
 
 
-var nPipe = { x: 10, y: 20, width: 40, height: 40 };
-var sPipe = {}
+$("#overlay").on("click", function(){if (myBird.y - myBird.radius <= 0) { return;}myBird.flap();})
 
-// $("#overlay").on("click", function (evt) {
+var down = false;
+document.addEventListener('keydown', function () {
+    if(down) return;
+    down = true;
+   if(event.which===32)
+   {
+    if (myBird.y - myBird.radius <= 0) { return; }
+    myBird.flap();
+   }
 
-// });
+}, false);
 
-document.onkeyup = function(event) {
-    if (bird1.y - bird1.radius <= 0) { return; }
-    bird1.flap();
+document.addEventListener('keyup', function () {
+    down = false;
+    if(event.which>=48 && event.which<=57){bg.img.src= (bg.img.src==='back1.png') ? 'back1.png': 'back2.png';}
+    if(event.which===20){hb = (hb===false) ? true:false;}
+}, false);
+
+
+//BACKGROUND OBJECT
+const bg=
+{
+    img:new Image(),
+
+    draw: function()
+    {
+        if(!this.img.src){this.img.src=backgrounds[1]}
+        ctx.drawImage(this.img, 0, 0, cvs.width, cvs.height)
+    },
+
 }
-
-function changeBG(){
-        bgno++;
-        bgno=bgno%2;
-        background.src = backgrounds[bgno];
-    }
 
 //DEFINE CLASS OF BIRD
 class Bird {
-    constructor(x, y, width, height) {     //CONSTRUCTOR defines (and initializes some) properties which every new bird must contain
+    constructor(x, y, height) {     //CONSTRUCTOR defines (and initializes some) properties which every new bird must contain
+        this.username = prompt("Please enter your name", "");
         this.x = x                     //Birds' x position should always be fixed until death.
         this.y = y                      //parameters
-        this.width = width
         this.height = height
+        this.width = height*1.58333
+        this.radius= height*0.56
         this.frame = 0                  //flapping animation frame init at 0
         this.speed = 0                  //velocity which combined with gravity can be used to obtain new y positions
         this.rotation = 0               //starts rotation off at 0 (These will be measured in ^^DEGREES)
@@ -65,13 +83,18 @@ class Bird {
 
 
     draw() {
-        ctx.clearRect(0, 0, cvs.width, cvs.height);        //clears the entire canvas
-        ctx.drawImage(background, 0, 0, cvs.width, cvs.height) //draws background (MOVE THIS INTO BG VARIABLE LATER)
         ctx.save(); //saves position of all elments
         ctx.translate(this.x, this.y);  //translates all elements
         ctx.rotate(this.rotation);  //rotates to the updated rotation angle
         ctx.drawImage(this.sprite, -this.width / 2, -this.height / 2, this.width, this.height);
         //redraws the bird sprite while the canvas is at this angle
+        if(hb===true){
+            ctx.beginPath();
+            ctx.arc(0+(this.height*0.1), 0 / 8, this.radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = "#FF0000";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
         ctx.restore(); //restores all element from b4 save to original values but keeps the skewed bird :)
 
     }
@@ -79,41 +102,41 @@ class Bird {
         this.speed = -jump; //speed is completely reset into jump (negative because the origin is at the top), 
     }//so the current downward speed won't affect the height of the jump.
     update() {  //all properties are appropriately updated based on their conditions before redrawing can occur    
-        this.frame += frames%5 == 0 ? 1 : 0;
-            this.frame = this.frame%animationArray.length;
-        if (this.y + this.height >= cvs.height - fg.height) {
+        this.frame += frames % 5 == 0 ? 1 : 0;
+        this.frame = this.frame % animationArray.length;
+        if (this.y + this.height/2 >= cvs.height-fg.height) {
             if (this.speed >= 0) { this.speed = 0 }
-                this.rotation=0;
-                this.frame=2;  
-                this.y += this.speed;
+            this.rotation = 0;
+            this.frame = 2;
+            this.y = cvs.height-fg.height-this.height/2;
+            this.y +=this.speed
         }
         else {
             this.speed += grav; //velocity incremented by acceleration pixels/interval^2
             this.sprite.src = animationArray[this.frame]  //finds the current frame to hold
-        
 
-        this.y += this.speed;   //pos is changed by the speed b/c speed holds pos y change per interval
 
-        if (this.speed >= jump) {
-            this.rotation = 90 * DEGREE;    //has fully finished its flap arc and is now in a nosedive
-            this.frame = 1;
-            if(this.speed<=jump+0.75)
-            {this.rotation=0}
-        }
-        
+            this.y += this.speed;   //pos is changed by the speed b/c speed holds pos y change per interval
 
-        else {
-            this.rotation = -25 * DEGREE;       //is currently mid flapping arc and is thus tilted upward.
-            //IF TIME ALLOWS, WE CAN ADD A MORE EASED TRANSITION JUST BY CREATING A ROTATION ARRAY RATHER THAN A SINGLE VARIABLE
-            //AND ADDING ANOTHER FRAMES COUNTER
-            
+            if (this.speed >= jump) {
+                this.rotation = 90 * DEGREE;    //has fully finished its flap arc and is now in a nosedive
+                this.frame = 1;
+                if (this.speed <= jump + 0.75) { this.rotation = 0 }
+            }
+
+
+            else {
+                this.rotation = -25 * DEGREE;       //is currently mid flapping arc and is thus tilted upward.
+                //IF TIME ALLOWS, WE CAN ADD A MORE EASED TRANSITION JUST BY CREATING A ROTATION ARRAY RATHER THAN A SINGLE VARIABLE
+                //AND ADDING ANOTHER FRAMES COUNTER
+
+            }
         }
     }
-    }
-}  
+}
 
 
-var bird1 = new Bird(50, 300, 80, 50)
+var myBird = new Bird(100, 300, 55)
 {
     animationArray = ['assets/up.svg', 'assets/mid.svg', 'assets/down.svg', 'assets/mid.svg']
 }
@@ -123,35 +146,84 @@ var bird1 = new Bird(50, 300, 80, 50)
 
 var fg = {
     img: new Image(),
-    
-    height: 130,
+
+    height: cvs.height*0.144,
     x: 0,
-    y: 570,
+    y: cvs.height*0.855,
     width: cvs.width*2,
     draw: function () {
-        this.img.src='assets/front.png',
-        // this.img.src = 'fg.png'     
-        // ctx.rect(this.x, this.y, this.width, this.height)
-        // let ptn = ctx.createPattern(fg.img, 'repeat-x');
-        // ctx.fillStyle = ptn;
-        // ctx.fill();
-        ctx.drawImage(this.img,this.x,this.y,this.width,this.height)
+        this.img.src = 'assets/front.png',
+            ctx.drawImage(this.img, this.x, this.y, this.width, this.height)
 
     },
-    update: function () 
-    {
-    this.x===-105 ? this.x=0:this.x-=pace
+    update: function () {
+        this.x === -448 ? this.x = 0 : this.x -= pace
     }
 }
 
+
+
+class Pipes {
+    constructor(gap, y) {
+        this.height = 720
+        this.width = 110
+        this.top = new Image()
+        this.bottom = new Image()
+        this.gap = gap                    //gap width (to be determined by a randomizer as well)
+        this.top.src = 'top.png'
+        this.bottom.src = 'bottom.png'  //sourcing the images to be used
+        this.y = y;       //to be set to a rand no. by server
+        this.x = cvs.width; //all new pipe objects start at the end of the canvas
+
+    }
+
+    draw() {
+        ctx.drawImage(this.top, this.x, this.y, this.width, this.height);  //draws pipe at current x & @ the randomized y pos
+        ctx.drawImage(this.bottom, this.x, this.y + this.height + this.gap, this.width, this.height);  //draws pipe w/ y relative to top pipe
+    }
+
+
+    update() {  //all properties are appropriately updated based on their conditions before redrawing can occur       
+        this.x -= pace;
+        // if the pipes go beyond canvas, we delete them from the array
+        if (this.x + this.width <= 0) { position.shift() }
+
+
+    
+    if(myBird.x+myBird.height*0.1 + myBird.radius > this.x && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width && myBird.y + myBird.radius > this.y && myBird.y - myBird.radius < this.y + this.height){
+        console.log("Collision T")
+    }
+    if(myBird.x+myBird.height*0.1 + myBird.radius > this.x && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width && myBird.y + myBird.radius > this.y + this.height + this.gap && myBird.y - myBird.radius <  this.y + this.height + this.gap + this.height){
+        console.log("Collision B")
+    }
+
+    }
+}
+
+
+
+
 function drawAll() {
-    bird1.draw()
+    ctx.clearRect(0, 0, cvs.width, cvs.height);        //clears the entire canvas
+    bg.draw()
+    myBird.draw()
+    for (var i = 0; i < position.length; i++) {
+    position[i].draw()
+    }
     fg.draw()
+
 }
 function loop() {
-    bird1.update()
+    myBird.update()
     fg.update()
+
     drawAll()
+    backgrounds.draw
+    if (frames % 250 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
+    for (var i = 0; i < position.length; i++) {
+        position[i].update()
+    }
+    
 
     requestAnimationFrame(loop);
     frames++;
@@ -160,6 +232,8 @@ function start() {
     document.getElementById("overlay").innerHTML = ""
     loop();
 }
+
+
 
     // var loops;
 // startgamestate = setInterval(function(){
