@@ -16,11 +16,12 @@ delta = 0,
 timestep = 1000 / maxFPS,
 framesThisSecond = 0,
 lastFpsUpdate = 0;
+score=0;
 
 
 
 //DEFINE GLOBAL VARIABLES AND CONSTANTS
-const grav = 0.0035;      //sets gravitational acceleration
+const grav = 0.003;      //sets gravitational acceleration
 const jump = 0.8;       //sets instantaneous flap speed setting 
 const DEGREE = Math.PI / 180;
 let frames = 0;
@@ -173,7 +174,7 @@ class Bird {
 
     }//so the current downward speed won't affect the height of the jump.
     update(delta) {  //all properties are appropriately updated based on their conditions before redrawing can occur    
-        this.frame += frames % 5 == 0 ? 1 : 0;
+        this.frame += frames % delta == 0 ? 1 : 0;
         this.frame = this.frame % animationArray.length;
         if (this.y + this.height / 2 >= cvs.height - fg.height) {
             if (this.speed >= 0) { this.speed = 0 }
@@ -189,10 +190,10 @@ class Bird {
 
             this.y += this.speed * delta;   //pos is changed by the speed b/c speed holds pos y change per interval
 
-            if (this.speed >= jump) {
+            if (this.speed >= jump*0.7) {
                 this.rotation = 90 * DEGREE;    //has fully finished its flap arc and is now in a nosedive
                 this.frame = 1;
-                if (this.speed <= jump + 0.75) { this.rotation = 0 }
+                if (this.speed <= jump*0.7 + 0.7) { this.rotation = 0 }
             }
 
 
@@ -207,7 +208,7 @@ class Bird {
 }
 
 
-var myBird = new Bird(100, 300, 55)
+var myBird = new Bird(100, 300, 50)
 {
     animationArray = ['assets/up.svg', 'assets/mid.svg', 'assets/down.svg', 'assets/mid.svg']
 }
@@ -265,15 +266,15 @@ class Pipes {
         && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width 
         && myBird.y + myBird.radius > this.y 
         && myBird.y - myBird.radius < this.y + this.height){
-        console.log("Collision T")
+        // console.log("Collision T")
     }
     if(myBird.x+myBird.height*0.1 + myBird.radius > this.x 
         && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width 
         && myBird.y + myBird.radius > this.y + this.height + this.gap 
         && myBird.y - myBird.radius <  this.y + this.height + this.gap + this.height){
-        console.log("Collision B")
+        // console.log("Collision B")
     }
-
+    if(this.x+this.width===myBird.x-myBird.radius/2){score++;}
     }
 }
 
@@ -314,7 +315,7 @@ function mainLoop(timestamp) {
     var numUpdateSteps = 0;
     while (delta >= timestep) {
         updateAll(timestep);
-        if (frames % 200 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
+        if (frames % 200*delta === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
         frames++;
         delta -= timestep;
         if (++numUpdateSteps >= 240) {
@@ -326,11 +327,6 @@ function mainLoop(timestamp) {
     
     
     
-
-
-    // updateAll()
-
-    console.log(timestamp)
     drawAll()
     requestAnimationFrame(mainLoop)
 
