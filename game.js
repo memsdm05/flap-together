@@ -7,12 +7,24 @@ var ctx = cvs.getContext('2d');
 //allows the 2d image variant to be drawn on the canvas
 
 
+
+
+//FRAMERATE EDITING VARIABLES
+lastFrameTimeMs = 0,
+maxFPS = 60,
+delta = 0,
+timestep = 1000 / maxFPS,
+framesThisSecond = 0,
+lastFpsUpdate = 0;
+
+
+
 //DEFINE GLOBAL VARIABLES AND CONSTANTS
-const grav = 0.5;      //sets gravitational acceleration
-const jump = 10 ;       //sets instantaneous flap speed setting 
+const grav = 0.0035;      //sets gravitational acceleration
+const jump = 0.8;       //sets instantaneous flap speed setting 
 const DEGREE = Math.PI / 180;
 let frames = 0;
-let pace = 2;
+let pace = 0.2;
 const backgrounds = ['assets/back1.png', 'assets/back2.png']
 let position = []
 let hb=false;
@@ -92,7 +104,7 @@ const state = {
 $("#overlay").on("click", function(){if (myBird.y - myBird.radius <= 0) { return;}myBird.flap();})
 
 var down = false;
-document.addEventListener('keydown', function () {
+document.addEventListener('keydown', function (event) {
     if(down) return;
     down = true;
    if(event.which===32)
@@ -103,7 +115,7 @@ document.addEventListener('keydown', function () {
 
 }, false);
 
-document.addEventListener('keyup', function () {
+document.addEventListener('keyup', function (event) {
     down = false;
     if(event.which>=48 && event.which<=57){bgno (bgno=0) ? 'assets/back2.png': 'assets/back.png';}
     if(event.which===20){hb = (hb===false) ? true:false;}
@@ -111,7 +123,7 @@ document.addEventListener('keyup', function () {
 
 
 //BACKGROUND OBJECT
-const bg=
+const bg =
 {
     img:new Image(),
 
@@ -158,23 +170,24 @@ class Bird {
     }
     flap() {
         this.speed = -jump; //speed is completely reset into jump (negative because the origin is at the top), 
+
     }//so the current downward speed won't affect the height of the jump.
-    update() {  //all properties are appropriately updated based on their conditions before redrawing can occur    
-        this.frame += frames % 5 == 0 ? 1 : 0;
+    update(delta) {  //all properties are appropriately updated based on their conditions before redrawing can occur    
+        this.frame += frames % 3.5 == 0 ? 1 : 0;
         this.frame = this.frame % animationArray.length;
-        if (this.y + this.height/2 >= cvs.height-fg.height) {
+        if (this.y + this.height / 2 >= cvs.height - fg.height) {
             if (this.speed >= 0) { this.speed = 0 }
             this.rotation = 0;
             this.frame = 2;
-            this.y = cvs.height-fg.height-this.height/2;
-            this.y +=this.speed
+            this.y = cvs.height - fg.height - this.height/2;
+            this.y += this.speed * delta
         }
         else {
-            this.speed += grav; //velocity incremented by acceleration pixels/interval^2
+            this.speed += grav * delta; //velocity incremented by acceleration pixels/interval^2
             this.sprite.src = animationArray[this.frame]  //finds the current frame to hold
 
 
-            this.y += this.speed;   //pos is changed by the speed b/c speed holds pos y change per interval
+            this.y += this.speed * delta;   //pos is changed by the speed b/c speed holds pos y change per interval
 
             if (this.speed >= jump) {
                 this.rotation = 90 * DEGREE;    //has fully finished its flap arc and is now in a nosedive
@@ -214,8 +227,8 @@ var fg = {
             ctx.drawImage(this.img, this.x, this.y, this.width, this.height)
 
     },
-    update: function () {
-        this.x === -448 ? this.x = 0 : this.x -= pace
+    update: function (delta) {
+        this.x <= -448 ? this.x = 0 : this.x -= pace * delta
     }
 }
 
@@ -241,8 +254,8 @@ class Pipes {
     }
 
 
-    update() {  //all properties are appropriately updated based on their conditions before redrawing can occur       
-        this.x -= pace;
+    update(delta) {  //all properties are appropriately updated based on their conditions before redrawing can occur       
+        this.x -= pace*delta;
         // if the pipes go beyond canvas, we delete them from the array
         if (this.x + this.width <= 0) { position.shift() }
 
@@ -266,36 +279,65 @@ function drawAll() {
     bg.draw()
     myBird.draw()
     for (var i = 0; i < position.length; i++) {
-    position[i].draw()
+        position[i].draw()
     }
     fg.draw()
-
 }
-function loop() {
-    
-    myBird.update()
-    fg.update()
-    bg.draw()
-    if (frames % 200 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
-    drawAll()
+
+function updateAll(delta){
+    myBird.update(delta)
+    fg.update(delta)
     for (var i = 0; i < position.length; i++) {
-        position[i].update()
-        
+        position[i].update(delta)
     }
+}
+
+
+function panic() {
+    delta = 0;
+}
+
+function mainLoop(timestamp) {
+    if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
+        requestAnimationFrame(mainLoop);
+        return;
+    }
+    delta += timestamp - lastFrameTimeMs;
+    lastFrameTimeMs = timestamp;
+
+    var numUpdateSteps = 0;
+    while (delta >= timestep) {
+        updateAll(timestep);
+        delta -= timestep;
+        if (++numUpdateSteps >= 240) {
+            panic();
+            break;
+        }
+    }
+    
+    
+    if (frames % 100 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
     frames++;
+
+
+    // updateAll()
+
+    console.log(timestamp)
+    drawAll()
+    requestAnimationFrame(mainLoop)
+
+
+
     
-    
-}
-function start() {
-    document.getElementById("overlay").innerHTML = ""
-    setInterval(loop,15);
 }
 
-function fps()
-{
+requestAnimationFrame(mainLoop)
 
 
-}
+    // document.getElementById("overlay").innerHTML = ""
+
+
+
 
 
     // var loops;
