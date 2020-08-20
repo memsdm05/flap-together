@@ -47,7 +47,7 @@ document.addEventListener('keydown', function () {
 
 document.addEventListener('keyup', function () {
     down = false;
-    if(event.which>=48 && event.which<=57){bg.img.src= (bg.img.src==='back1.png') ? 'back1.png': 'back2.png';}
+    if(event.which>=48 && event.which<=57){bg.img.src = (bg.img.src===backgrounds[0]) ? backgrounds[1]: backgrounds[0];}
     if(event.which===20){hb = (hb===false) ? true:false;}
 }, false);
 
@@ -59,7 +59,7 @@ const bg=
 
     draw: function()
     {
-        if(!this.img.src){this.img.src=backgrounds[1]}
+        if(!this.img.src){this.img.src=backgrounds[0]}
         ctx.drawImage(this.img, 0, 0, cvs.width, cvs.height)
     },
 
@@ -170,8 +170,8 @@ class Pipes {
         this.top = new Image()
         this.bottom = new Image()
         this.gap = gap                    //gap width (to be determined by a randomizer as well)
-        this.top.src = 'top.png'
-        this.bottom.src = 'bottom.png'  //sourcing the images to be used
+        this.top.src = 'assets/top.png'
+        this.bottom.src = 'assets/bottom.png'  //sourcing the images to be used
         this.y = y;       //to be set to a rand no. by server
         this.x = cvs.width; //all new pipe objects start at the end of the canvas
 
@@ -216,10 +216,9 @@ function drawAll() {
 function loop() {
     myBird.update()
     fg.update()
-
-    drawAll()
-    backgrounds.draw
+    bg.draw()
     if (frames % 250 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
+    drawAll()
     for (var i = 0; i < position.length; i++) {
         position[i].update()
     }
