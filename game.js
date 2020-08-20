@@ -9,7 +9,7 @@ var ctx = cvs.getContext('2d');
 
 //DEFINE GLOBAL VARIABLES AND CONSTANTS
 const grav = 0.5;      //sets gravitational acceleration
-const jump = 9 ;       //sets instantaneous flap speed setting 
+const jump = 10 ;       //sets instantaneous flap speed setting 
 const DEGREE = Math.PI / 180;
 let frames = 0;
 let pace = 2;
@@ -288,7 +288,7 @@ function loop() {
 }
 function start() {
     document.getElementById("overlay").innerHTML = ""
-    setInterval(loop,16.5);
+    setInterval(loop,15);
 }
 
 function fps()
