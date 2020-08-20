@@ -16,7 +16,7 @@ let pace = 2;
 const backgrounds = ['assets/back1.png', 'assets/back2.png']
 let position = []
 let hb=false;
-
+let bgno=0;
 
 //TEMP place for bg
 
@@ -47,7 +47,7 @@ document.addEventListener('keydown', function () {
 
 document.addEventListener('keyup', function () {
     down = false;
-    if(event.which>=48 && event.which<=57){bg.img.src = (bg.img.src===backgrounds[0]) ? backgrounds[1]: backgrounds[0];}
+    if(event.which>=48 && event.which<=57){bgno (bgno=0) ? 'assets/back2.png': 'assets/back.png';}
     if(event.which===20){hb = (hb===false) ? true:false;}
 }, false);
 
@@ -59,7 +59,7 @@ const bg=
 
     draw: function()
     {
-        if(!this.img.src){this.img.src=backgrounds[0]}
+        this.img.src=backgrounds[bgno]
         ctx.drawImage(this.img, 0, 0, cvs.width, cvs.height)
     },
 
@@ -214,24 +214,30 @@ function drawAll() {
 
 }
 function loop() {
+    
     myBird.update()
     fg.update()
     bg.draw()
-    if (frames % 250 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
+    if (frames % 200 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
     drawAll()
     for (var i = 0; i < position.length; i++) {
         position[i].update()
+        
     }
-    
-
-    requestAnimationFrame(loop);
     frames++;
+    
+    
 }
 function start() {
     document.getElementById("overlay").innerHTML = ""
-    loop();
+    setInterval(loop,16.5);
 }
 
+function fps()
+{
+
+
+}
 
 
     // var loops;
