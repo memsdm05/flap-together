@@ -21,6 +21,64 @@ let hb=false;
 //TEMP place for bg
 
 
+class Packet {
+    constructor(socket) {
+        this.ws = socket        
+    }
+
+    sendFlap(bird) {
+        this.ws.send(JSON.stringify(
+            {
+                type: "flap",
+                attr: {
+                    usr: bird.username,
+                    y : bird.y,
+                    vy : -jump
+                }
+            }
+        ))
+    }
+
+    sendDeath(bird) {
+        this.ws.send(JSON.stringify(
+            {
+                type : "death",
+                attr : {
+                    usr : bird.username,
+                    points: bird.points
+                }
+            }
+        ))
+    }
+
+    sendNewPlayer(bird) {
+        this.ws.send(JSON.stringify(
+            {
+                type : "new",
+                attr : {
+                    usr : bird.username,
+                    x: bird.points
+                }
+            }
+        ))
+    }
+
+    sendInfo(bird) {
+        this.ws.send(JSON.stringify(
+            {
+                type : "info",
+                attr : {
+                    usr : bird.username,
+                    x : bird.x,
+                    y : bird.y,
+                    vy : bird.speed
+                }
+            }
+        ))
+    }
+}
+
+var packet = new Packet(new WebSocket("ws://localhost:4000"))
 
 
 const state = {
