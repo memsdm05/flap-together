@@ -11,7 +11,7 @@ var ctx = cvs.getContext('2d');
 
 //FRAMERATE EDITING VARIABLES
 lastFrameTimeMs = 0,
-maxFPS = 60,
+maxFPS = 100,
 delta = 0,
 timestep = 1000 / maxFPS,
 framesThisSecond = 0,
@@ -173,7 +173,7 @@ class Bird {
 
     }//so the current downward speed won't affect the height of the jump.
     update(delta) {  //all properties are appropriately updated based on their conditions before redrawing can occur    
-        this.frame += frames % 3.5 == 0 ? 1 : 0;
+        this.frame += frames % 5 == 0 ? 1 : 0;
         this.frame = this.frame % animationArray.length;
         if (this.y + this.height / 2 >= cvs.height - fg.height) {
             if (this.speed >= 0) { this.speed = 0 }
@@ -261,10 +261,16 @@ class Pipes {
 
 
     
-    if(myBird.x+myBird.height*0.1 + myBird.radius > this.x && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width && myBird.y + myBird.radius > this.y && myBird.y - myBird.radius < this.y + this.height){
+    if(myBird.x+myBird.height*0.1 + myBird.radius > this.x 
+        && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width 
+        && myBird.y + myBird.radius > this.y 
+        && myBird.y - myBird.radius < this.y + this.height){
         console.log("Collision T")
     }
-    if(myBird.x+myBird.height*0.1 + myBird.radius > this.x && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width && myBird.y + myBird.radius > this.y + this.height + this.gap && myBird.y - myBird.radius <  this.y + this.height + this.gap + this.height){
+    if(myBird.x+myBird.height*0.1 + myBird.radius > this.x 
+        && myBird.x+myBird.height*0.1 - myBird.radius < this.x + this.width 
+        && myBird.y + myBird.radius > this.y + this.height + this.gap 
+        && myBird.y - myBird.radius <  this.y + this.height + this.gap + this.height){
         console.log("Collision B")
     }
 
@@ -308,16 +314,18 @@ function mainLoop(timestamp) {
     var numUpdateSteps = 0;
     while (delta >= timestep) {
         updateAll(timestep);
+        if (frames % 200 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
+        frames++;
         delta -= timestep;
         if (++numUpdateSteps >= 240) {
             panic();
             break;
         }
+        
     }
     
     
-    if (frames % 100 === 0) {position.push(new Pipes(Math.random() * 30 + 170, Math.random() * 350 - 690)) }
-    frames++;
+    
 
 
     // updateAll()
